@@ -10,7 +10,5 @@
 * Column table
 * Nested table
 
-#### funding
-* SunLab, CASBR, University of Florida
 
 

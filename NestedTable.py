@@ -53,13 +53,11 @@ class NestedTable():
         
         # creating tables
         table_id = 0
-        for table_name, lst_group in self.original_df.items():
+        for table_name, dict_df in self.original_df.items():
             
-            df_group = lst_group[0]
-            dict_group = lst_group[1]
             
             # print(dict_group.values())
-            num_subcolumns = len(list(dict_group.values())[0])
+            num_subcolumns = dict_df[list(dict_df.keys())[0]].shape[1]
             
             table = ET.SubElement(root, "Table", {"ID": "Table{}".format(table_id), 
                                                   "YFormat":"replicates", 
@@ -92,8 +90,8 @@ class NestedTable():
             # </SubColumnTitles>
                         
             lst_all_groups = []
-            for group_name, group_values in dict_group.items():
-                lst_all_groups.append(group_values)
+            for group_name, group_df in dict_df.items():
+                lst_all_groups.append(list(group_df.columns))
                 
             np_all_groups = np.array(lst_all_groups)
             subcolumntitles = ET.SubElement(table, "SubColumnTitles", {"OwnSet" : "1"})
@@ -108,15 +106,15 @@ class NestedTable():
                     
             # populating the data
             
-            for group_name, group_col_values in dict_group.items():
+            for group_name, group_df in dict_df.items():
                 
                 Ycolumn = ET.SubElement(table, "YColumn", {"Width": "81", "Decimals" : "{}".format(self.decimal_places), "Subcolumns": "{}".format(num_subcolumns) })
                 title = ET.SubElement(Ycolumn,  "Title")
                 title.text = "{}".format(group_name)
 
-                for col in group_col_values:
+                for col in group_df.columns:
                     subcolumn = ET.SubElement(Ycolumn, "Subcolumn")
-                    for val in df_group[col].values:
+                    for val in group_df[col].values:
                         record = ET.SubElement(subcolumn, "d")
                         record.text = str(val)
 
@@ -129,10 +127,19 @@ if __name__ == '__main__':
         
         # How to use?
         
-        arr = np.random.randint(0, 100, (5, 10))
-        df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(10)])
-        dict_df = {"Cow Treatment": [df, {"Untreated": ["Herd 1", "Herd 2", "Herd 3"], "Treated": ["Herd 4", "Herd 5", "Herd 6"], "Control": ["Herd 7", "Herd 8", "Herd 9"]}],
-                   "pig Treatment": [df, {"Untreated": ["Herd 1", "Herd 2", "Herd 3"], "Treated": ["Herd 4", "Herd 5", "Herd 6"], "Control": ["Herd 7", "Herd 8", "Herd 9"]}]}
+        arr = np.random.randint(0, 100, (5, 3))
+        # df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(10)])
+        cow_treated_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        cow_untreated_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        cow_control_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        
+        pig_treated_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        pig_untreated_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        pig_control_df = pd.DataFrame(arr, columns=[f'Herd {i}' for i in range(3)])
+        
+        print(pig_control_df)
+        dict_df = {"Cow Treatment": {"Untreated": cow_untreated_df, "Treated": cow_treated_df , "Control": cow_control_df},
+                   "pig Treatment": {"Untreated":pig_treated_df, "Treated": pig_untreated_df, "Control": pig_control_df}}
         nested_table = NestedTable(dict_df)
         nested_table.to_xml("data/prism_template.pzfx", "data/populated_nested.pzfx")
         print("XML file created successfully.")
